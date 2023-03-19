@@ -1,0 +1,65 @@
+#!/usr/bin/env python
+# usage: update
+# function: checks for linux distribution and then updates packages
+# author: Nikos Toutountzoglou, nikos.toutou@gmail.com
+# revision: 19-03-23
+
+import os, sys, distro, shutil, subprocess
+uid = os.getuid()
+
+if uid==0:
+	sys.exit('This script cannot be run as root!')
+
+def packages_update():
+	dist = distro.id()
+	class color:
+		PURPLE = '\033[95m'
+		CYAN = '\033[96m'
+		DARKCYAN = '\033[36m'
+		BLUE = '\033[94m'
+		GREEN = '\033[92m'
+		YELLOW = '\033[93m'
+		RED = '\033[91m'
+		BOLD = '\033[1m'
+		UNDERLINE = '\033[4m'
+		END = '\033[0m'
+
+# Arch/Manjaro Linux
+	# pacman + paru + flatpak
+	if dist in {'arch', 'manjaro', 'manjaro-arm'} and shutil.which('paru') is not None and shutil.which('flatpak') is not None:
+		print(':: Found distro: ' + color.BOLD + distro.id() + color.END + ', paru (AUR) and flatpak')
+		subprocess.run('sudo pacman -Syu --noconfirm', shell=True, check=True)
+		subprocess.run('paru -Sua --nouseask', shell=True, check=True)
+		subprocess.run('sudo flatpak update -y', shell=True, check=True)
+	# pacman + paru
+	elif dist in {'arch', 'manjaro', 'manjaro-arm'} and shutil.which('paru') is not None and shutil.which('flatpak') is None:
+		print(':: Found distro: ' + color.BOLD + distro.id() + color.END + ' and paru (AUR)')
+		subprocess.run('sudo pacman -Syu --noconfirm', shell=True, check=True)
+		subprocess.run('paru -Sua --nouseask', shell=True, check=True)
+	# pacman + flatpak
+	elif dist in {'arch', 'manjaro', 'manjaro-arm'} and shutil.which('paru') is None and shutil.which('flatpak') is not None:
+		print(':: Found distro: ' + color.BOLD + distro.id() + color.END + ', paru (AUR) and flatpak')
+		subprocess.run('sudo pacman -Syu --noconfirm', shell=True, check=True)
+		subprocess.run('sudo flatpak update -y', shell=True, check=True)
+	# pacman
+	elif dist in {'arch', 'manjaro', 'manjaro-arm'} and shutil.which('paru') is None and shutil.which('flatpak') is None:
+		print(':: Found distro: ' + color.BOLD + distro.id() + color.END)
+		subprocess.run('sudo pacman -Syu --noconfirm', shell=True, check=True)
+
+# Debian/Ubuntu Linux
+	# apt + snap
+	elif dist in {'debian', 'ubuntu'} and shutil.which('snap') is not None:
+		print(':: Found distro: ' + color.BOLD + distro.id() + color.END + ', and snap')
+		subprocess.run('sudo apt update && sudo apt -y upgrade', shell=True, check=True)
+		subprocess.run('sudo snap refresh', shell=True, check=True)
+	# apt
+	elif dist in {'debian', 'ubuntu'}:
+		print(':: Found distro: ' + color.BOLD + distro.id() + color.END)
+		subprocess.run('sudo apt update && sudo apt -y upgrade', shell=True, check=True)
+
+# Unknown Distros
+	else:
+		print(':: Unsupported distribution.')
+		sys.exit(1)
+
+packages_update()
